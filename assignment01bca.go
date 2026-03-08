@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-type block struct {
-	prevBlock    *block
-	prevHash     string
-	hash         string // = sha256(prevHash, nonce, merkleRoot, creationTime, index)
-	nonce        int
-	index        int
-	creationTime time.Time
-	merkleRoot   string //the hash of the transaction data (naive i.e. O(n) way for simplicity for now)
-	transaction  string
+type Block struct {
+	PrevBlock    *Block
+	PrevHash     string
+	Hash         string // = sha256(prevHash, nonce, merkleRoot, creationTime, index)
+	Nonce        int
+	Index        int
+	CreationTime time.Time
+	MerkleRoot   string //the hash of the transaction data (naive i.e. O(n) way for simplicity for now)
+	Transaction  string
 }
 
 func byte32toStr(data [32]byte) string {
@@ -25,24 +25,20 @@ func CalculateHash(stringToHash string) string {
 	return byte32toStr(sha256.Sum256([]byte(stringToHash)))
 }
 
-func NewBlock(transaction string, nonce int, prev *block, index int) *block {
-	nblock := &block{prevBlock: prev, nonce: nonce, creationTime: time.Now(), transaction: transaction, index: index}
+func NewBlock(transaction string, nonce int, prev *Block, index int) *Block {
+	nblock := &Block{PrevBlock: prev, Nonce: nonce, CreationTime: time.Now(), Transaction: transaction, Index: index}
 	if prev != nil {
-		nblock.prevHash = prev.hash
+		nblock.PrevHash = prev.Hash
 	} else {
-		nblock.prevHash = ""
+		nblock.PrevHash = ""
 	}
-	nblock.merkleRoot = CalculateHash(transaction)
-	header := nblock.prevHash + strconv.Itoa(nonce) + nblock.merkleRoot + nblock.creationTime.String() + strconv.Itoa(index)
-	nblock.hash = CalculateHash(header)
+	nblock.MerkleRoot = CalculateHash(transaction)
+	header := nblock.PrevHash + strconv.Itoa(nonce) + nblock.MerkleRoot + strconv.FormatInt(nblock.CreationTime.Unix(), 10) + strconv.Itoa(index)
+	nblock.Hash = CalculateHash(header)
 	return nblock
 }
 
 /*
-	func ListBlocks() {
-		"A method to print all the blocks in a nice format showing block data such as transaction, nonce, previous hash, current block hash"
-	}
-
 	func ChangeBlock() {
 		"function to change block transaction of the given block ref"
 	}
