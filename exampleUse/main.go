@@ -1,52 +1,18 @@
-package assignment01bca
+package main
 
 import (
 	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
 	"image/color"
 	"math/big"
 	"strconv"
-	"time"
 
-	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/healthystrongmuslim/assignment01bca"
 )
-
-type Block struct {
-	PrevBlock    *Block
-	PrevHash     string
-	Hash         string // = sha256(prevHash, nonce, merkleRoot, creationTime, index)
-	Nonce        int
-	Index        int
-	CreationTime time.Time
-	MerkleRoot   string //the hash of the transaction data (naive i.e. O(n) way for simplicity for now)
-	Transaction  string
-}
-
-func byte32toStr(data [32]byte) string {
-	return hex.EncodeToString(data[:])
-}
-
-func CalculateHash(stringToHash string) string {
-	return byte32toStr(sha256.Sum256([]byte(stringToHash)))
-}
-
-func NewBlock(transaction string, nonce int, prev *Block, index int) *Block {
-	nblock := &Block{PrevBlock: prev, Nonce: nonce, CreationTime: time.Now(), Transaction: transaction, Index: index}
-	if prev != nil {
-		nblock.PrevHash = prev.Hash
-	} else {
-		nblock.PrevHash = ""
-	}
-	nblock.MerkleRoot = CalculateHash(transaction)
-	header := nblock.PrevHash + strconv.Itoa(nonce) + nblock.MerkleRoot + strconv.FormatInt(nblock.CreationTime.Unix(), 10) + strconv.Itoa(index)
-	nblock.Hash = CalculateHash(header)
-	return nblock
-}
 
 func BlockWidget(b *assignment01bca.Block) *fyne.Container {
 	transactionEntry := widget.NewEntry()
@@ -123,4 +89,29 @@ func ChainWidget(w fyne.Window, blockchain []*assignment01bca.Block) *container.
 	chainBtns := container.NewHBox(addBtn, verifyBtn)
 	blocks = append(blocks, chainBtns)
 	return container.NewVScroll(container.NewVBox(blocks...))
+}
+
+var bchain []*assignment01bca.Block
+
+func main() {
+	a := app.New()
+	w := a.NewWindow("Blockchain")
+	onTypedKey := func(e *fyne.KeyEvent) {
+		if e.Name == fyne.KeyA {
+			AddBlock(w, bchain)
+		}
+		if e.Name == fyne.KeyV {
+			VerifyChain(w, bchain)
+		}
+	}
+	w.Canvas().SetOnTypedKey(onTypedKey)
+	// Start with genesis block
+	bchain = []*assignment01bca.Block{
+		assignment01bca.NewBlock("Genesis 5:60", 8, nil, 0),
+	}
+	bchain = append(bchain, assignment01bca.NewBlock("Asim 10000 BTC → Musab", 311, bchain[0], 1))
+	bchain = append(bchain, assignment01bca.NewBlock("Musab 1 PZA → Asim", 32, bchain[1], 2))
+
+	w.SetContent(ChainWidget(w, bchain))
+	w.ShowAndRun()
 }
