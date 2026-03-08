@@ -2,6 +2,7 @@ package assignment01bca
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"strconv"
 	"time"
 )
@@ -18,7 +19,7 @@ type Block struct {
 }
 
 func byte32toStr(data [32]byte) string {
-	return string(data[:])
+	return hex.EncodeToString(data[:])
 }
 
 func CalculateHash(stringToHash string) string {
